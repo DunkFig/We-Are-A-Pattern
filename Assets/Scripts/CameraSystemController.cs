@@ -25,12 +25,10 @@ public class CameraGroup
     [Tooltip("All camera pairs in this group")]
     public List<CameraPair> pairs;
 
-    // Runtime queue of unused pair indices
     [NonSerialized] public Queue<int> availablePairIndices;
 
     public void InitPairQueue()
     {
-        // Shuffle indices for random cycling
         var idxs = new List<int>(pairs.Count);
         for (int i = 0; i < pairs.Count; i++) idxs.Add(i);
         for (int i = 0; i < idxs.Count; i++)
@@ -52,19 +50,15 @@ public class CameraGroup
 public class CameraSystemController : MonoBehaviour
 {
     [Header("Groups & Pairs")]
-    [Tooltip("Define all camera groups and their pairs here.")]
     public List<CameraGroup> cameraGroups;
 
     [Header("Music System Reference")]
-    [Tooltip("Drag your WebCamMusicSystem instance here to receive threshold events.")]
     public WebCamMusicSystem webCam;
 
     [Header("Threshold Timing")]
-    [Tooltip("Cooldown in seconds after a threshold event before switching again.")]
     public float thresholdCooldown = 1f;
 
     [Header("Group Visit Limits")]
-    [Tooltip("How many times a group may be re-entered before requiring all others.")]
     public int groupCycleLimit = 1;
 
     private int _currentGroup;
@@ -74,20 +68,16 @@ public class CameraSystemController : MonoBehaviour
 
     void OnEnable()
     {
-        // Initialize visit counts and pair queues
         for (int i = 0; i < cameraGroups.Count; i++)
         {
-            cameraGroups[i].InitPairQueue();
+            cameraGroups[i]?.InitPairQueue();
             _groupVisitCount[i] = 0;
         }
-
-        // Subscribe to threshold event
         if (webCam != null)
             webCam.OnDarkestThreshold.AddListener(OnThresholdHit);
 
-        // Pick a random start
         _currentGroup = UnityEngine.Random.Range(0, cameraGroups.Count);
-        _currentPair = cameraGroups[_currentGroup].DequeueNextPair();
+        _currentPair = GetValidPair(_currentGroup);
         _groupVisitCount[_currentGroup]++;
         ActivatePair(_currentGroup, _currentPair);
     }
@@ -102,14 +92,12 @@ public class CameraSystemController : MonoBehaviour
     {
         if (Time.time < _nextAllowedTime)
             return;
-
         StepToNextPairOrGroup();
         _nextAllowedTime = Time.time + thresholdCooldown;
     }
 
     void StepToNextPairOrGroup()
     {
-        // Cycle within current group if possible
         var currentGroupData = cameraGroups[_currentGroup];
         int nextPair = currentGroupData.availablePairIndices.Count > 0
             ? currentGroupData.DequeueNextPair()
@@ -123,17 +111,14 @@ public class CameraSystemController : MonoBehaviour
             return;
         }
 
-        // All pairs used: pick nearest eligible group
         if (AllGroupsVisited())
             ResetGroupVisitCounts();
 
         int newGroup = PickNearestEligibleGroup();
-        if (newGroup < 0) newGroup = _currentGroup;
-
-        _currentGroup = newGroup;
-        _currentPair = cameraGroups[newGroup].DequeueNextPair();
-        _groupVisitCount[newGroup]++;
-        ActivatePair(newGroup, _currentPair);
+        _currentGroup = newGroup >= 0 ? newGroup : _currentGroup;
+        _currentPair = GetValidPair(_currentGroup);
+        _groupVisitCount[_currentGroup]++;
+        ActivatePair(_currentGroup, _currentPair);
     }
 
     bool AllGroupsVisited()
@@ -146,22 +131,27 @@ public class CameraSystemController : MonoBehaviour
 
     int PickNearestEligibleGroup()
     {
-        Vector3 currentPos = cameraGroups[_currentGroup]
-            .pairs[_currentPair]
-            .mainCamera.transform.position;
+        Vector3 currentPos;
+        var activePair = GetPair(_currentGroup, _currentPair);
+        if (activePair?.mainCamera != null)
+            currentPos = activePair.mainCamera.transform.position;
+        else
+            return -1;
 
-        bool anyBelowLimit = false;
+        bool anyBelow = false;
         foreach (var kv in _groupVisitCount)
             if (kv.Value < groupCycleLimit)
-                anyBelowLimit = true;
+                anyBelow = true;
 
         float bestDist = float.MaxValue;
         int bestIdx = -1;
         for (int i = 0; i < cameraGroups.Count; i++)
         {
             if (i == _currentGroup) continue;
-            if (anyBelowLimit && _groupVisitCount[i] >= groupCycleLimit) continue;
-            float dist = (cameraGroups[i].anchor.position - currentPos).sqrMagnitude;
+            if (anyBelow && _groupVisitCount[i] >= groupCycleLimit) continue;
+            var group = cameraGroups[i];
+            if (group?.anchor == null) continue;
+            float dist = (group.anchor.position - currentPos).sqrMagnitude;
             if (dist < bestDist)
             {
                 bestDist = dist;
@@ -169,6 +159,22 @@ public class CameraSystemController : MonoBehaviour
             }
         }
         return bestIdx;
+    }
+
+    int GetValidPair(int groupIdx)
+    {
+        var group = cameraGroups[groupIdx];
+        if (group == null || group.pairs == null || group.pairs.Count == 0)
+            return 0;
+        return group.DequeueNextPair();
+    }
+
+    CameraPair GetPair(int groupIdx, int pairIdx)
+    {
+        var group = cameraGroups[groupIdx];
+        if (group == null || group.pairs == null) return null;
+        if (pairIdx < 0 || pairIdx >= group.pairs.Count) return null;
+        return group.pairs[pairIdx];
     }
 
     void ResetGroupVisitCounts()
@@ -180,17 +186,16 @@ public class CameraSystemController : MonoBehaviour
 
     void ActivatePair(int groupIdx, int pairIdx)
     {
-        // Disable all cameras in all groups
         foreach (var g in cameraGroups)
-            foreach (var p in g.pairs)
-            {
-                if (p.mainCamera != null) p.mainCamera.enabled = false;
-                if (p.demonCamera != null) p.demonCamera.enabled = false;
-            }
+            if (g?.pairs != null)
+                foreach (var p in g.pairs)
+                {
+                    if (p.mainCamera != null) { p.mainCamera.enabled = false; var ml = p.mainCamera.GetComponent<AudioListener>(); if (ml != null) ml.enabled = false; }
+                    if (p.demonCamera != null) { p.demonCamera.enabled = false; var dl = p.demonCamera.GetComponent<AudioListener>(); if (dl != null) dl.enabled = false; }
+                }
 
-        // Enable main + demon cameras for active pair
-        var active = cameraGroups[groupIdx].pairs[pairIdx];
-        if (active.mainCamera != null) active.mainCamera.enabled = true;
-        if (active.demonCamera != null) active.demonCamera.enabled = true;
+        var active = GetPair(groupIdx, pairIdx);
+        if (active?.mainCamera != null) { active.mainCamera.enabled = true; var ml = active.mainCamera.GetComponent<AudioListener>(); if (ml != null) ml.enabled = true; }
+        if (active?.demonCamera != null) { active.demonCamera.enabled = true; var dl = active.demonCamera.GetComponent<AudioListener>(); if (dl != null) dl.enabled = true; }
     }
 }
