@@ -8,7 +8,7 @@ import sys
 # === CONFIGURATION ===
 UDP_IP = "127.0.0.1"
 UDP_PORT = 9000
-SERIAL_PORT = "/dev/cu.usbmodem143101"  # <-- Adjust for Linux
+SERIAL_PORT = "/dev/cu.usbmodem14201"  # <-- Adjust for Linux
 BAUD_RATE = 115200
 
 # === SETUP ===
