@@ -1,9 +1,10 @@
-// WebCamMusicSystem.cs
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Events;
 using System.Net.Sockets;
 using System.Text;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 public class WebCamMusicSystem : MonoBehaviour
 {
@@ -18,10 +19,6 @@ public class WebCamMusicSystem : MonoBehaviour
     private float frameInterval;
     private float lastFrameTime;
 
-    [Header("Transition Settings")]
-    [Tooltip("How quickly CV values and timeline speed change")]
-    public float SonicTransitionSpeed = 1.5f;
-
     [Header("Increment Settings")]
     [Range(0, 1000)] public int redIncrement = 20;
     [Range(0, 1000)] public int greenIncrement = 20;
@@ -32,19 +29,30 @@ public class WebCamMusicSystem : MonoBehaviour
     [Range(0, 4096)] public float CenteringThreshold = 500f;
     [Range(0f, 1f)] public float CenteringSpeed = 0.05f;
 
+    [Header("Sonic Transition")]
+    [Range(0.01f, 5f)] public float SonicTransitionSpeed = 1.0f;
+
     [Header("Serial Settings")]
-    public string udpAddress = "127.0.0.1";
-    public int udpPort = 9000;
+    public string portName = "/dev/cu.usbmodem144101";
+    public int baudRate = 115200;
 
     [Header("Processing Settings")]
     public int divisionAmount = 20;
     public float brightnessThreshold = 100f;
 
-    [Header("Timeline Control")]
+    [Header("Timeline Link")]
     public TownTimelineController townTimeline;
+
 
     [Header("Events")]
     public UnityEvent OnDarkestThreshold;
+
+    [Header("Post Processing")]
+    public Volume postProcessVolume;
+    private LensDistortion lensDistortion;
+    private MotionBlur motionBlur;
+    private Vignette vignette;
+    private DepthOfField depthOfField;
 
     private WebCamTexture webcamTex;
     private Color[] stripeColors;
@@ -52,12 +60,15 @@ public class WebCamMusicSystem : MonoBehaviour
     private float darkestBrightness = float.MaxValue;
     private Color32[] pixels;
     private int camWidth, camHeight;
-    private UdpClient udpClient;
 
-    private bool thresholdTriggered = false;
+    private UdpClient udpClient;
+    private bool prevThresholdState = false;
+
     private float darkCV = 2048f, redCV = 2048f, greenCV = 2048f, blueCV = 2048f;
-    private float targetDark = 2048f, targetRed = 2048f, targetGreen = 2048f, targetBlue = 2048f;
-    private float timelineSpeedTarget = 0f;
+    private float targetDarkCV = 2048f, targetRedCV = 2048f, targetGreenCV = 2048f, targetBlueCV = 2048f;
+
+    private float targetSpeed = 0f;
+    private float currentSpeed = 0f;
 
     void Start()
     {
@@ -71,9 +82,17 @@ public class WebCamMusicSystem : MonoBehaviour
         InvokeRepeating(nameof(TryInitPixels), 0.5f, 0.5f);
 
         udpClient = new UdpClient();
-        udpClient.Connect(udpAddress, udpPort);
+        udpClient.Connect("127.0.0.1", 9000);
 
         stripeColors = new Color[divisionAmount];
+
+        if (postProcessVolume != null)
+        {
+            postProcessVolume.profile.TryGet(out lensDistortion);
+            postProcessVolume.profile.TryGet(out motionBlur);
+            postProcessVolume.profile.TryGet(out vignette);
+            postProcessVolume.profile.TryGet(out depthOfField);
+        }
     }
 
     void TryInitPixels()
@@ -91,13 +110,12 @@ public class WebCamMusicSystem : MonoBehaviour
     {
         if (Time.time - lastFrameTime < frameInterval) return;
         lastFrameTime = Time.time;
-
         if (pixels == null || !webcamTex.isPlaying) return;
-        webcamTex.GetPixels32(pixels);
 
+        webcamTex.GetPixels32(pixels);
         AnalyzeFrame();
         UpdateUI();
-        LerpToTargets();
+        UpdateLerps();
         SendSerial();
     }
 
@@ -125,55 +143,15 @@ public class WebCamMusicSystem : MonoBehaviour
             float avgR = r / (float)count;
             float avgG = g / (float)count;
             float avgB = b / (float)count;
-
             stripeColors[i] = new Color(avgR / 255f, avgG / 255f, avgB / 255f);
-            float brightness = avgR + avgG + avgB;
 
+            float brightness = avgR + avgG + avgB;
             if (brightness < darkestBrightness)
             {
                 darkestBrightness = brightness;
                 darkestStripeIndex = i;
             }
         }
-
-        bool thresholdNow = darkestBrightness < brightnessThreshold;
-        thresholdIndicator.enabled = thresholdNow;
-
-        if (thresholdNow && !thresholdTriggered)
-        {
-            OnDarkestThreshold?.Invoke();
-            SetNewTargetsFromDarkest();
-            thresholdTriggered = true;
-        }
-        else if (!thresholdNow)
-        {
-            thresholdTriggered = false;
-        }
-    }
-
-    void SetNewTargetsFromDarkest()
-    {
-        if (darkestStripeIndex < 0 || darkestStripeIndex >= stripeColors.Length) return;
-
-        Color c = stripeColors[darkestStripeIndex];
-        targetRed = Mathf.Clamp(2048f + ((c.r - 0.5f) * 2f * redIncrement), 0f, 4095f);
-        targetGreen = Mathf.Clamp(2048f + ((c.g - 0.5f) * 2f * greenIncrement), 0f, 4095f);
-        targetBlue = Mathf.Clamp(2048f + ((c.b - 0.5f) * 2f * blueIncrement), 0f, 4095f);
-        targetDark = Mathf.Clamp(2048f + ((darkestStripeIndex / (float)(divisionAmount - 1) - 0.5f) * 2f * darkIncrement), 0f, 4095f);
-
-        float mappedSpeed = Mathf.Lerp(5f, -5f, darkestStripeIndex / (float)(divisionAmount - 1));
-        if (townTimeline != null)
-        {
-            townTimeline.SetTargetSpeed(mappedSpeed);
-        }
-    }
-
-    void LerpToTargets()
-    {
-        darkCV = Mathf.Lerp(darkCV, targetDark, Time.deltaTime / SonicTransitionSpeed);
-        redCV = Mathf.Lerp(redCV, targetRed, Time.deltaTime / SonicTransitionSpeed);
-        greenCV = Mathf.Lerp(greenCV, targetGreen, Time.deltaTime / SonicTransitionSpeed);
-        blueCV = Mathf.Lerp(blueCV, targetBlue, Time.deltaTime / SonicTransitionSpeed);
     }
 
     void UpdateUI()
@@ -185,23 +163,75 @@ public class WebCamMusicSystem : MonoBehaviour
         {
             var highlightRT = darkestHighlight.rectTransform;
             highlightRT.position = stripeImages[darkestStripeIndex].rectTransform.position;
-
-            if (thresholdIndicator.enabled)
-            {
-                var tr = thresholdIndicator.rectTransform;
-                tr.position = highlightRT.position + new Vector3(60, 0, 0);
-            }
         }
+
+        bool nowThreshold = darkestBrightness < brightnessThreshold;
+        thresholdIndicator.enabled = nowThreshold;
+
+        if (nowThreshold && !prevThresholdState)
+        {
+            OnDarkestThreshold?.Invoke();
+
+            float positionFactor = darkestStripeIndex / (float)(divisionAmount - 1);
+            targetSpeed = Mathf.Lerp(5f, -5f, positionFactor);
+
+            var color = stripeColors[darkestStripeIndex];
+            targetDarkCV = Mathf.Clamp(positionFactor * 4096, 0, 4095);
+            targetRedCV   = Mathf.Clamp(2048f + (color.r - 0.5f) * 2f * redIncrement, 0, 4095);
+            targetGreenCV = Mathf.Clamp(2048f + (color.g - 0.5f) * 2f * greenIncrement, 0, 4095);
+            targetBlueCV  = Mathf.Clamp(2048f + (color.b - 0.5f) * 2f * blueIncrement, 0, 4095);
+        }
+
+        prevThresholdState = nowThreshold;
+    }
+
+    void UpdateLerps()
+    {
+        float t = Time.deltaTime * SonicTransitionSpeed;
+
+        redCV = Mathf.Lerp(redCV, targetRedCV, t);
+        greenCV = Mathf.Lerp(greenCV, targetGreenCV, t);
+        blueCV = Mathf.Lerp(blueCV, targetBlueCV, t);
+        darkCV = Mathf.Lerp(darkCV, targetDarkCV, t);
+
+        currentSpeed = Mathf.Lerp(currentSpeed, targetSpeed, t);
+
+            if (townTimeline != null)
+        {
+            townTimeline.playbackSpeed = currentSpeed;
+        }
+
+        UpdatePostProcessing(currentSpeed);
+    }
+
+    void UpdatePostProcessing(float speed)
+    {
+        float absSpeed = Mathf.Abs(speed) / 5f;
+        if (lensDistortion != null)
+            lensDistortion.intensity.value = Mathf.Lerp(0.139f, -1f, absSpeed);
+
+        if (motionBlur != null)
+            motionBlur.intensity.value = Mathf.Lerp(0f, 1f, absSpeed);
+
+        if (vignette != null)
+        {
+            float sm = Mathf.InverseLerp(-5f, 5f, speed);
+            vignette.smoothness.value = Mathf.Lerp(1f, 0f, sm);
+        }
+
+        if (depthOfField != null)
+            depthOfField.focusDistance.value = Mathf.Lerp(130f, 15f, absSpeed);
     }
 
     void SendSerial()
     {
         string output = $"{(int)darkCV} {(int)redCV} {(int)greenCV} {(int)blueCV}";
-        byte[] message = Encoding.UTF8.GetBytes(output + "\n");
+        byte[] message = Encoding.UTF8.GetBytes(output);
 
         try
         {
             udpClient.Send(message, message.Length);
+            Debug.Log("📡 Sent to bridge: " + output);
         }
         catch (System.Exception e)
         {
