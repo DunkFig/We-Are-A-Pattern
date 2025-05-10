@@ -487,7 +487,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playbackSpeed: 1
-  transitionDuration: 2
+  transitionDuration: 3
   audioSources: []
 --- !u!114 &52437851
 MonoBehaviour:
@@ -2285,7 +2285,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569030660542034001, guid: 6098f6ec1a3984c93a32d1952bd77666, type: 3}
       propertyPath: redIncrement
-      value: 153
+      value: 272
       objectReference: {fileID: 0}
     - target: {fileID: 4569030660542034001, guid: 6098f6ec1a3984c93a32d1952bd77666, type: 3}
       propertyPath: townTimeline
@@ -2313,7 +2313,7 @@ PrefabInstance:
       objectReference: {fileID: 188867074}
     - target: {fileID: 4569030660542034001, guid: 6098f6ec1a3984c93a32d1952bd77666, type: 3}
       propertyPath: SonicTransitionSpeed
-      value: 2
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 7021882642415881527, guid: 6098f6ec1a3984c93a32d1952bd77666, type: 3}
       propertyPath: m_IsActive
@@ -7397,7 +7397,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1925141082
 RectTransform:
   m_ObjectHideFlags: 0
