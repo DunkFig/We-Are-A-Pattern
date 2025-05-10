@@ -82,6 +82,17 @@ public class CameraSystemController : MonoBehaviour
         ActivatePair(_currentGroup, _currentPair);
     }
 
+    void Update()
+    {
+        // Debug: press Space to force the next camera/pair
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            StepToNextPairOrGroup();
+            // optional: reset the cooldown so you can spam Space
+            _nextAllowedTime = 0f;
+        }
+    }
+
     void OnDisable()
     {
         if (webCam != null)
