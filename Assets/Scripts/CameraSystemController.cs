@@ -9,8 +9,6 @@ public class CameraPair
     [Tooltip("The main camera for this pair (renders normal scene)")]
     public Camera mainCamera;
 
-    [Tooltip("The demon camera for this pair (renders only demon objects)")]
-    public Camera demonCamera;
 }
 
 [Serializable]
@@ -202,11 +200,9 @@ public class CameraSystemController : MonoBehaviour
                 foreach (var p in g.pairs)
                 {
                     if (p.mainCamera != null) { p.mainCamera.enabled = false; var ml = p.mainCamera.GetComponent<AudioListener>(); if (ml != null) ml.enabled = false; }
-                    if (p.demonCamera != null) { p.demonCamera.enabled = false; var dl = p.demonCamera.GetComponent<AudioListener>(); if (dl != null) dl.enabled = false; }
                 }
 
         var active = GetPair(groupIdx, pairIdx);
         if (active?.mainCamera != null) { active.mainCamera.enabled = true; var ml = active.mainCamera.GetComponent<AudioListener>(); if (ml != null) ml.enabled = true; }
-        if (active?.demonCamera != null) { active.demonCamera.enabled = true; var dl = active.demonCamera.GetComponent<AudioListener>(); if (dl != null) dl.enabled = true; }
     }
 }
