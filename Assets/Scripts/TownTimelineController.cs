@@ -46,15 +46,20 @@ public class TownTimelineController : MonoBehaviour
         rootPlayable.SetSpeed(playbackSpeed);
 
         double t = director.time;
+        bool loopedForward = false;
+        bool loopedBackward = false;
+
         if (playbackSpeed > 0f && t >= duration)
         {
             director.time = 0;
             director.Evaluate();
+            loopedForward = true;
         }
         else if (playbackSpeed < 0f && t <= 0)
         {
             director.time = duration;
             director.Evaluate();
+            loopedBackward = true;
         }
 
         if (playbackSpeed == 0f)
@@ -64,13 +69,28 @@ public class TownTimelineController : MonoBehaviour
             return;
         }
 
-        if (director.state != PlayState.Playing) director.Play();
+        if (director.state != PlayState.Playing)
+            director.Play();
 
         foreach (var src in audioSources)
         {
             if (src.clip == null) continue;
+
+            // Match pitch to playback speed
             src.pitch = playbackSpeed;
+
+            // Ensure it's playing
             if (!src.isPlaying) src.Play();
+
+            // Sync audio loop points with timeline
+            if (loopedForward)
+            {
+                src.time = 0f;
+            }
+            else if (loopedBackward)
+            {
+                src.timeSamples = src.clip.samples - 1;
+            }
         }
     }
 }
