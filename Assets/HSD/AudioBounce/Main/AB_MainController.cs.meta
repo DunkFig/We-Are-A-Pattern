@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 1c55a5084df53894dbc7128cdfc7edc9
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - abLocator: {instanceID: 0}
+  - abProbeDistributor: {instanceID: 0}
+  - modulationCurves: {fileID: 11400000, guid: ce071150a06d1b9448b71999df7ffb5e, type: 2}
+  - audioMixer: {fileID: 24100000, guid: 10185332e0415274b96c941fe3def9bf, type: 2}
+  executionOrder: 0
+  icon: {fileID: 2800000, guid: d3e0689d6ab6cd14485c84c045b7e1e0, type: 3}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

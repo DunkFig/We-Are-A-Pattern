@@ -1,0 +1,71 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2817322725805720088
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8576855550547172382}
+  - component: {fileID: 3654667570740441044}
+  m_Layer: 3
+  m_Name: AudioBounce_ProbesDistributor
+  m_TagString: Untagged
+  m_Icon: {fileID: 2974397684917235467, guid: 0000000000000000d000000000000000, type: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8576855550547172382
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2817322725805720088}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: -1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3654667570740441044
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2817322725805720088}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c67f3874477afc44a8f747df1241edcd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  finalProbePosition: []
+  reverbFactor: 0
+  numberOfProbes: 500
+  framesToSpreadRaycasts: 12
+  probesProjectionRadius: 25
+  hitPointNormalOffset: 0.25
+  layerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  preCastProbePositions: []
+  numberOfPointsPerRow: 28
+  numberOfRows: 10
+  radius: 0.5
+  height: 0.74
+  offset: -0.025
+  heightCurve: {fileID: 11400000, guid: 79ccc91cd18fbf942b5c8bdcf535535a, type: 2}
+  shrinkingFactor: {fileID: 11400000, guid: cfe04edf270b15f4a9cdf5445cef9c66, type: 2}
+  allowShrinkFactorReduction: 1
+  minimumShrinkNumberPerRow: 1
+  drawGizmos: 1
+  showPreCast: 0
+  showPostCast: 1
+  showRayLength: 0
+  totalRaycastDistanceTemp: 0
+  totalRaycastDistance: 0
