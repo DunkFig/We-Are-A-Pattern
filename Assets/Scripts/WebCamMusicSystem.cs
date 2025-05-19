@@ -8,6 +8,15 @@ using UnityEngine.Rendering.Universal;
 
 public class WebCamMusicSystem : MonoBehaviour
 {
+    private float udpSendDelay = 5f;  // Wait 5 seconds before first send
+    private float startTime;
+    private bool udpReady = false;
+
+
+    [Header("MIDI Settings")]
+    public int[] stripeMidiNotes = new int[20]; // Map each stripe to a MIDI note
+    public int midiVelocity = 100;
+
     [Header("UI Setup")]
     public RawImage webcamDisplay;
     public Image[] stripeImages = new Image[20];
@@ -43,7 +52,6 @@ public class WebCamMusicSystem : MonoBehaviour
     [Header("Timeline Link")]
     public TownTimelineController townTimeline;
 
-
     [Header("Events")]
     public UnityEvent OnDarkestThreshold;
 
@@ -53,6 +61,10 @@ public class WebCamMusicSystem : MonoBehaviour
     private MotionBlur motionBlur;
     private Vignette vignette;
     private DepthOfField depthOfField;
+
+    [Header("Audio Feedback")]
+    public AudioSource audioSource;
+    public AudioClip[] stripeClips = new AudioClip[20];
 
     private WebCamTexture webcamTex;
     private Color[] stripeColors;
@@ -72,6 +84,8 @@ public class WebCamMusicSystem : MonoBehaviour
 
     void Start()
     {
+        startTime = Time.time;
+
         Application.runInBackground = true;
         frameInterval = 1f / frameRate;
         lastFrameTime = Time.time;
@@ -180,6 +194,18 @@ public class WebCamMusicSystem : MonoBehaviour
             targetRedCV   = Mathf.Clamp(2048f + (color.r - 0.5f) * 2f * redIncrement, 0, 4095);
             targetGreenCV = Mathf.Clamp(2048f + (color.g - 0.5f) * 2f * greenIncrement, 0, 4095);
             targetBlueCV  = Mathf.Clamp(2048f + (color.b - 0.5f) * 2f * blueIncrement, 0, 4095);
+
+            if (darkestStripeIndex >= 0 && darkestStripeIndex < stripeClips.Length && audioSource != null)
+            {
+                audioSource.clip = stripeClips[darkestStripeIndex];
+                audioSource.Play();
+
+                // Send MIDI Note via UDP bridge
+                string midiMsg = $"MIDI {stripeMidiNotes[darkestStripeIndex]} {midiVelocity}";
+                byte[] midiBytes = Encoding.UTF8.GetBytes(midiMsg);
+                udpClient.Send(midiBytes, midiBytes.Length);
+
+            }
         }
 
         prevThresholdState = nowThreshold;
@@ -196,7 +222,7 @@ public class WebCamMusicSystem : MonoBehaviour
 
         currentSpeed = Mathf.Lerp(currentSpeed, targetSpeed, t);
 
-            if (townTimeline != null)
+        if (townTimeline != null)
         {
             townTimeline.playbackSpeed = currentSpeed;
         }
@@ -225,6 +251,21 @@ public class WebCamMusicSystem : MonoBehaviour
 
     void SendSerial()
     {
+        if (!udpReady)
+        {
+            try
+            {
+                udpClient.Send(new byte[] { 0 }, 1);  // Try sending a ping byte
+                udpReady = true;
+                Debug.Log("✅ UDP ready.");
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning("🔌 UDP still not ready: " + e.Message);
+                return;
+            }
+        }
+
         string output = $"{(int)darkCV} {(int)redCV} {(int)greenCV} {(int)blueCV}";
         byte[] message = Encoding.UTF8.GetBytes(output);
 
@@ -235,9 +276,12 @@ public class WebCamMusicSystem : MonoBehaviour
         }
         catch (System.Exception e)
         {
-            Debug.LogWarning("UDP send failed: " + e.Message);
+            Debug.LogWarning("🔌 Final UDP send failed: " + e.Message);
+            udpReady = false;
         }
     }
+
+
 
     void OnDestroy()
     {
