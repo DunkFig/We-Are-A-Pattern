@@ -29,7 +29,7 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV "/Users/duncanfigurski/Desktop/WE ARE A PATTERN/We-Are-A-Pattern (Clone)/Assets/Python/venv"
+set -gx VIRTUAL_ENV "/Users/duncanfigurski/Desktop/WE ARE A PATTERN/We-Are-A-Pattern (Clone)/Assets/Streaming Assets/Python/venv"
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/bin" $PATH

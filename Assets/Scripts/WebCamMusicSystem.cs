@@ -187,7 +187,7 @@ public class WebCamMusicSystem : MonoBehaviour
             OnDarkestThreshold?.Invoke();
 
             float positionFactor = darkestStripeIndex / (float)(divisionAmount - 1);
-            targetSpeed = Mathf.Lerp(5f, -5f, positionFactor);
+            targetSpeed = Mathf.Lerp(1f, 1f, positionFactor);
 
             var color = stripeColors[darkestStripeIndex];
             targetDarkCV = Mathf.Clamp(positionFactor * 4096, 0, 4095);
@@ -227,27 +227,27 @@ public class WebCamMusicSystem : MonoBehaviour
             townTimeline.playbackSpeed = currentSpeed;
         }
 
-        UpdatePostProcessing(currentSpeed);
+        // UpdatePostProcessing(currentSpeed);
     }
 
-    void UpdatePostProcessing(float speed)
-    {
-        float absSpeed = Mathf.Abs(speed) / 5f;
-        if (lensDistortion != null)
-            lensDistortion.intensity.value = Mathf.Lerp(0.139f, -1f, absSpeed);
+    // void UpdatePostProcessing(float speed)
+    // {
+    //     float absSpeed = Mathf.Abs(speed) / 5f;
+    //     if (lensDistortion != null)
+    //         lensDistortion.intensity.value = Mathf.Lerp(0.139f, -1f, absSpeed);
 
-        if (motionBlur != null)
-            motionBlur.intensity.value = Mathf.Lerp(0f, 1f, absSpeed);
+    //     if (motionBlur != null)
+    //         motionBlur.intensity.value = Mathf.Lerp(0f, 1f, absSpeed);
 
-        if (vignette != null)
-        {
-            float sm = Mathf.InverseLerp(-5f, 5f, speed);
-            vignette.smoothness.value = Mathf.Lerp(1f, 0f, sm);
-        }
+    //     if (vignette != null)
+    //     {
+    //         float sm = Mathf.InverseLerp(-5f, 5f, speed);
+    //         vignette.smoothness.value = Mathf.Lerp(1f, 0f, sm);
+    //     }
 
-        if (depthOfField != null)
-            depthOfField.focusDistance.value = Mathf.Lerp(130f, 15f, absSpeed);
-    }
+    //     if (depthOfField != null)
+    //         depthOfField.focusDistance.value = Mathf.Lerp(130f, 15f, absSpeed);
+    // }
 
     void SendSerial()
     {
