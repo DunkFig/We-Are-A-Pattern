@@ -7,7 +7,7 @@ import sys
 # === CONFIGURATION ===
 UDP_IP = "127.0.0.1"
 UDP_PORT = 9000
-SERIAL_PORT = "/dev/cu.usbmodem144101"  # Adjust for your system
+SERIAL_PORT = "/dev/cu.usbmodem143101"  # Adjust for your system
 BAUD_RATE = 115200
 
 # === MIDI SETUP ===
