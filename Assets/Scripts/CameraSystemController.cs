@@ -105,7 +105,7 @@ public class CameraSystemController : MonoBehaviour
         _nextAllowedTime = Time.time + thresholdCooldown;
     }
 
-    void StepToNextPairOrGroup()
+    public void StepToNextPairOrGroup()
     {
         var currentGroupData = cameraGroups[_currentGroup];
         int nextPair = currentGroupData.availablePairIndices.Count > 0
