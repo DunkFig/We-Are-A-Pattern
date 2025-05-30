@@ -437,6 +437,27 @@ public class WebCamMusicSystem : MonoBehaviour
         }
     }
 
+    public void ReconnectCamera()
+{
+    // stop current feed
+    if (webcamTex != null && webcamTex.isPlaying)
+        webcamTex.Stop();
+
+    // grab the device list again (in case something changed)
+    var cams = WebCamTexture.devices;
+    if (webcamIndex >= 0 && webcamIndex < cams.Length)
+        webcamTex = new WebCamTexture(cams[webcamIndex].name);
+    else
+        webcamTex = new WebCamTexture();
+
+    webcamDisplay.texture = webcamTex;
+    webcamTex.Play();
+
+    // restart the pixel‐initialization loop
+    CancelInvoke(nameof(TryInitPixels));
+    InvokeRepeating(nameof(TryInitPixels), 0.5f, 0.5f);
+}
+
     void OnDestroy()
     {
         if (webcamTex != null && webcamTex.isPlaying)
