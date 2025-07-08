@@ -40,7 +40,7 @@ MonoBehaviour:
   active: 1
   intensity:
     m_OverrideState: 1
-    m_Value: 0.139
+    m_Value: -0.39
   xMultiplier:
     m_OverrideState: 1
     m_Value: 1
@@ -74,7 +74,7 @@ MonoBehaviour:
     m_Value: {r: 0.9150943, g: 0.8598096, b: 0.22877358, a: 1}
   balance:
     m_OverrideState: 1
-    m_Value: 2.9
+    m_Value: -6
 --- !u!114 &-201201288707263860
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -90,7 +90,7 @@ MonoBehaviour:
   active: 1
   shadows:
     m_OverrideState: 1
-    m_Value: {x: 0.62151086, y: 1, z: 0.64995146, w: 0.18348624}
+    m_Value: {x: 0.62151086, y: 1, z: 0.64995146, w: 0.47860548}
   midtones:
     m_OverrideState: 1
     m_Value: {x: 0.90626025, y: 1, z: 0.98598176, w: 0.11467888}
@@ -150,10 +150,10 @@ MonoBehaviour:
     m_Value: 1
   gaussianStart:
     m_OverrideState: 1
-    m_Value: 3.91
+    m_Value: 5.3
   gaussianEnd:
     m_OverrideState: 1
-    m_Value: 295
+    m_Value: 196.9
   gaussianMaxRadius:
     m_OverrideState: 1
     m_Value: 1.5
@@ -165,10 +165,10 @@ MonoBehaviour:
     m_Value: 2.4
   aperture:
     m_OverrideState: 1
-    m_Value: 3.3
+    m_Value: 2.9
   focalLength:
     m_OverrideState: 1
-    m_Value: 15
+    m_Value: 26
   bladeCount:
     m_OverrideState: 1
     m_Value: 9
@@ -196,7 +196,7 @@ MonoBehaviour:
     m_Value: 27
   tint:
     m_OverrideState: 1
-    m_Value: 0
+    m_Value: 56
 --- !u!114 &2923204717671691111
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -212,7 +212,7 @@ MonoBehaviour:
   active: 1
   intensity:
     m_OverrideState: 1
-    m_Value: 0.443
+    m_Value: 0.575
 --- !u!114 &2942385558589829716
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -234,7 +234,7 @@ MonoBehaviour:
     m_Value: {x: 0.5, y: 0.5}
   intensity:
     m_OverrideState: 1
-    m_Value: 0.288
+    m_Value: 0.198
   smoothness:
     m_OverrideState: 1
     m_Value: 1
@@ -299,13 +299,13 @@ MonoBehaviour:
     m_Value: 1
   threshold:
     m_OverrideState: 1
-    m_Value: 0.73
+    m_Value: 0.72
   intensity:
     m_OverrideState: 1
-    m_Value: 0.45
+    m_Value: 0.9
   scatter:
     m_OverrideState: 1
-    m_Value: 0.747
+    m_Value: 0.672
   clamp:
     m_OverrideState: 0
     m_Value: 65472
